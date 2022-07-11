@@ -1,0 +1,34 @@
+# train
+CUDA_VISIBLE_DEVICES=6 python tools/train.py \
+-f exps/dtld/dtld_s.py \
+-b 64 --fp16 -o \
+-c weights/yolox_s.pth \
+--cache 
+
+--resume
+
+
+# demo
+CUDA_VISIBLE_DEVICES=7 python tools/demo.py image \
+--path /data/DTLD_Yolo/images/val \
+-f exps/yolox_VOCdtld_x.py \
+-c weights/.pth \
+--save_result --device gpu
+
+
+# docker
+nvidia-docker run -it --shm-size 400G --name zh_yx -v zh_local:/data -v zh_perception:/mnt/data -v /home/zhanghao2:/zhanghao -p 7777:8888 -p 5005:6006 8609e73febe3
+
+
+
+"""
+
+Can I run wandb offline?
+
+    If you're training on an offline machine and want to upload your results to our servers afterwards, we have a feature for you!
+    Set the environment variable WANDB_MODE=offline to save the metrics locally, no internet required.
+    When you're ready, run wandb init in your directory to set the project name.
+    Run wandb sync YOUR_RUN_DIRECTORY to push the metrics to our cloud service and see your results in our hosted web app.
+    You can check via API whether your run is offline by using run.settings._offline or run.settings.mode after your wandb.init().
+
+"""
