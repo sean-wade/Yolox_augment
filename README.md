@@ -5,9 +5,13 @@
 * Add support of mt-yolov6 efficient-rep backbone.
 * Add attribute detection branch and evaluate code(using DTLD dataset).
 * Add fpn-p2/pan-p2 for small object detection.
+* Add yolov5 evaluate code, plot eval results like yolov5.
 
 
 ### Attributes
+
+Add attribute detection branch and evaluate code(using DTLD dataset). The visualization results is as below:
+<img src="assets/demo2.png" width="1000" >
 
 ```
 For DTLD dataset, there are 8 types of attributes. The definition is as below:
@@ -57,11 +61,15 @@ with attributes(input_size=640):
 
 rep_xs_attr_960.py describes about how to train a yolox model with EfficientRep backbone. The results of Yolox-efficientrep on DTLD dataset:
 
-<img src="assets/rep.png" width="1000" >
+<img src="assets/rep.png" width="1200" >
 
 
 ### P2 Neck
 
 xs_attr_f2_960.py and xs_attr_p234.py describes about how to train a yolox model with P2 Neck.
 
+
+### Yolov5 evaluate code
+
+<img src="runs/local_eval/PR_curve.png" width="1200" >
 
