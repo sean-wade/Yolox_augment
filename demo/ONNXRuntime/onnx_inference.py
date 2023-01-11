@@ -1,3 +1,10 @@
+'''
+Author: zhanghao
+LastEditTime: 2022-08-31 15:57:57
+FilePath: /YOLOX/demo/ONNXRuntime/onnx_inference.py
+LastEditors: zhanghao
+Description: 
+'''
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
@@ -66,10 +73,15 @@ if __name__ == '__main__':
     origin_img = cv2.imread(args.image_path)
     img, ratio = preprocess(origin_img, input_shape)
 
-    session = onnxruntime.InferenceSession(args.model)
+    session = onnxruntime.InferenceSession(args.model, providers=['CUDAExecutionProvider'])
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
     output = session.run(None, ort_inputs)
+
+    print(type(output))
+    print(output[0][0].shape)
+    np.savetxt("output.txt", output[0][0])
+
     predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
 
     boxes = predictions[:, :4]

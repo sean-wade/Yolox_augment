@@ -2,10 +2,10 @@
 
 ## Features
 
-* Add support of mt-yolov6 efficient-rep backbone.
-* Add attribute detection branch and evaluate code(using DTLD dataset).
+* Add attribute detection branch and evaluate code(using DTLD/SGTLS[private] dataset for traffic-light detection).
+* Add yolov5 evaluate code, plot eval results like yolov5. And modify VOC evaluate code.
 * Add fpn-p2/pan-p2 for small object detection.
-* Add yolov5 evaluate code, plot eval results like yolov5.
+* Add support of mt-yolov6 efficient-rep backbone.
 
 
 ### Attributes
@@ -71,5 +71,5 @@ xs_attr_f2_960.py and xs_attr_p234.py describes about how to train a yolox model
 
 ### Yolov5 evaluate code
 
-<img src="runs/local_eval/PR_curve.png" width="1200" >
+<img src="assets/PR_curve.png" width="1200" >
 

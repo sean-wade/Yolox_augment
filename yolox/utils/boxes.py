@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
-import enum
 import numpy as np
 
 import torch
@@ -30,7 +29,7 @@ def filter_box(output, scale_range):
     return output[keep]
 
 
-def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agnostic=False):
+def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agnostic=False, attr_nums=[]):
     box_corner = prediction.new(prediction.shape)
     box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2
     box_corner[:, :, 1] = prediction[:, :, 1] - prediction[:, :, 3] / 2
@@ -50,9 +49,9 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agn
 
         # process with attributes.
         if image_pred.shape[1] > (5 + num_classes):
-            from yolox.data.datasets import DTLD_ATTRIBUTES
+            # from yolox.data.datasets import DTLD_ATTRIBUTES
+            # attr_nums = [len(attr_values) for attr_values in DTLD_ATTRIBUTES.values()]
             attr_preds = []
-            attr_nums = [len(attr_values) for attr_values in DTLD_ATTRIBUTES.values()]
             used_num = 0
             for attr_num in attr_nums:
                 attr_conf, attr_pred = torch.max(image_pred[:, 5 + num_classes+used_num: 5 + num_classes+used_num + attr_num], 1, keepdim=True)

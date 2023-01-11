@@ -1,34 +1,45 @@
 # train
 CUDA_VISIBLE_DEVICES=6 python tools/train.py \
--f exps/dtld/dtld_s.py \
+-f exps/sgtls/sgtls_s_001_010_relu.py \
 -b 64 --fp16 -o \
 -c weights/yolox_s.pth \
 --cache 
 
+python tools/train.py -f exps/sgtls/sgtls_s_001_019_relu.py -b 128 --fp16 -o -c weights/yolox_s.pth --cache
+
 --resume
+
+python tools/train.py -f exps/sgtls/sgtls_s_001_023_relu_fine.py --fp16 -o --cache -b 128 -c YOLOX_outputs/sgtls_s_001_019_relu/best_ckpt.pth
+
 
 
 # demo
-CUDA_VISIBLE_DEVICES=7 python tools/demo.py image \
---path /data/DTLD_Yolo/images/val \
--f exps/yolox_VOCdtld_x.py \
--c weights/.pth \
+CUDA_VISIBLE_DEVICES=0 python tools/demo.py image \
+--path /home/jovyan/workspace/TL_TEST_SET/Testsets \
+-f exps/sgtls/sgtls_nano_001_010_relu.py \
+-c YOLOX_outputs/sgtls_nano_001_010_relu/best_ckpt.pth \
 --save_result --device gpu
 
+python tools/demo.py image \
+--path /home/jovyan/workspace/TL_TEST_SET/miss \
+-f exps/sgtls/sgtls_s_001_011_relu.py \
+-c YOLOX_outputs/sgtls_s_001_011_relu/best_ckpt.pth \
+--save_result --device gpu
 
 # docker
 nvidia-docker run -it --shm-size 400G --name zh_yx -v zh_local:/data -v zh_perception:/mnt/data -v /home/zhanghao2:/zhanghao -p 7777:8888 -p 5005:6006 8609e73febe3
 
+# export
+python tools/export_onnx.py -f exps/sgtls/sgtls_s_001_011_relu.py --output-name YOLOX_outputs/sgtls_s_001_011_relu/best_ckpt.onnx -c YOLOX_outputs/sgtls_s_001_011_relu/best_ckpt.pth
 
 
-"""
 
-Can I run wandb offline?
+# generate info
+python ~/workspace/camera_traffic_light_data/devikit/create_train_val_info.py --ratio 1.0
 
-    If you're training on an offline machine and want to upload your results to our servers afterwards, we have a feature for you!
-    Set the environment variable WANDB_MODE=offline to save the metrics locally, no internet required.
-    When you're ready, run wandb init in your directory to set the project name.
-    Run wandb sync YOUR_RUN_DIRECTORY to push the metrics to our cloud service and see your results in our hosted web app.
-    You can check via API whether your run is offline by using run.settings._offline or run.settings.mode after your wandb.init().
+╒════════════╤════════════╤══════════╤════════════╤════════════╤═════════════╤═══════════╤══════════╤════════════╤════════════╤════════════╤════════════╤═════════════╕
+│ tp=15177   │  direction │orientatio│     state  │ indication │  occlusion  │ truncation│    blur  │  child_num │  relevance │    color   │     pict   │         All │
+╞════════════╪════════════╪══════════╪════════════╪════════════╪═════════════╪═══════════╪══════════╪════════════╪════════════╪════════════╪════════════╪═════════════╡
+╘════════════╧════════════╧══════════╧════════════╧════════════╧═════════════╧═══════════╧══════════╧════════════╧════════════╧════════════╧════════════╧═════════════╛
 
-"""
+

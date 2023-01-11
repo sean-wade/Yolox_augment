@@ -18,7 +18,8 @@ import numpy as np
 from yolox.utils import xyxy2cxcywh
 
 
-def augment_hsv(img, hgain=5, sgain=30, vgain=30):
+# def augment_hsv(img, hgain=5, sgain=30, vgain=30):
+def augment_hsv(img, hgain=15, sgain=40, vgain=40):
     hsv_augs = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain]  # random gains
     hsv_augs *= np.random.randint(0, 2, 3)  # random selection of h, s, v
     hsv_augs = hsv_augs.astype(np.int16)
@@ -159,22 +160,23 @@ def preproc(img, input_size, swap=(2, 0, 1)):
 
 
 class TrainTransform:
-    def __init__(self, max_labels=50, flip_prob=0.5, hsv_prob=1.0, with_dtld_attr=False):
+    def __init__(self, max_labels=50, flip_prob=0.5, hsv_prob=1.0, with_dtld_attr=False, attr_num=8):
         self.max_labels = max_labels
         self.flip_prob = flip_prob
         self.hsv_prob = hsv_prob
         self.with_dtld_attr = with_dtld_attr
+        self.attr_num = attr_num
 
     def __call__(self, image, targets, input_dim):
         boxes = targets[:, :4].copy()
         if self.with_dtld_attr:
-            labels = targets[:, 4:13].copy()
+            labels = targets[:, 4:5+self.attr_num].copy()
         else:
             labels = targets[:, 4].copy()
 
         if len(boxes) == 0:
             if self.with_dtld_attr:
-                targets = np.zeros((self.max_labels, 13), dtype=np.float32)
+                targets = np.zeros((self.max_labels, 5+self.attr_num), dtype=np.float32)
             else:
                 targets = np.zeros((self.max_labels, 5), dtype=np.float32)
             image, r_o = preproc(image, input_dim)
@@ -185,7 +187,7 @@ class TrainTransform:
         height_o, width_o, _ = image_o.shape
         boxes_o = targets_o[:, :4]
         if self.with_dtld_attr:
-            labels_o = targets_o[:, 4:13]
+            labels_o = targets_o[:, 4:5+self.attr_num]
         else:
             labels_o = targets_o[:, 4]
         
@@ -216,7 +218,7 @@ class TrainTransform:
         
         targets_t = np.hstack((labels_t[:,0].reshape(-1,1), boxes_t, labels_t[:,1:]))
         if self.with_dtld_attr:
-            padded_labels = np.zeros((self.max_labels, 13))
+            padded_labels = np.zeros((self.max_labels, 5+self.attr_num))
         else:
             padded_labels = np.zeros((self.max_labels, 5))
 

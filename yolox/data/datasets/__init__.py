@@ -9,3 +9,4 @@ from .mosaicdetection import MosaicDetection
 from .voc import VOCDetection
 
 from .dtld import DTLDDetection, DTLD_CLASSES, DTLD_ATTRIBUTES
+from .sgtls import SGTLS_Detection, SGTLS_CLASSES, SGTLS_ATTRIBUTES 

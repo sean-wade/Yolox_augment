@@ -249,4 +249,4 @@ class DTLDDetection(Dataset):
             else:
                 gt_boxes[idx] = np.hstack((labels_idx, gt_boxes_idx))
             
-        return get_metrics(pred_boxes, gt_boxes, save_path, with_attr=with_attr)
+        return get_metrics(pred_boxes, gt_boxes, save_path, with_attr=with_attr, attr_num=8)

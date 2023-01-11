@@ -48,6 +48,8 @@ class DTLDEvaluator:
         self.num_images = len(dataloader.dataset)
         self.output_path = output_path
         self.with_attr = with_attr
+        from yolox.data.datasets import DTLD_ATTRIBUTES
+        self.attr_nums = [len(attr_values) for attr_values in DTLD_ATTRIBUTES.values()]
 
     def evaluate(
         self,
@@ -112,7 +114,7 @@ class DTLDEvaluator:
                     infer_end = time_synchronized()
                     inference_time += infer_end - start
                 outputs = postprocess(
-                    outputs, self.num_classes, self.confthre, self.nmsthre
+                    outputs, self.num_classes, self.confthre, self.nmsthre, attr_nums=self.attr_nums
                 )
                 if is_time_record:
                     nms_end = time_synchronized()

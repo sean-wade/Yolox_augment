@@ -18,9 +18,9 @@ from tqdm import tqdm
 from yolox.evaluators.metrics import ConfusionMatrix, ap_per_class, box_iou, AttributeEval, get_table
 
 
-class_names_dict = {
-    0 : 'traffic_light'
-}
+# class_names_dict = {
+#     0 : 'traffic_light'
+# }
 
 
 def xywh2xyxy(x):
@@ -84,7 +84,16 @@ def process_batch(detections, labels, iouv):
 
 
 # def get_metrics(pred_folder, gt_folder, save_path, img_shape=(1024,2048), nc=1, device="cuda"):
-def get_metrics(predictions, groundtruths, save_path, img_shape=(1024,2048), nc=1, device="cuda", with_attr=False, val_info=""):
+def get_metrics(predictions, 
+                groundtruths, 
+                save_path, 
+                img_shape=(1024,2048), 
+                nc=1, 
+                device="cuda", 
+                with_attr=False,
+                attr_num = 8,
+                class_names_dict = {0 : 'traffic_light'},
+                val_info=""):
     """
     Args:
         predictions : prediction folder(str) or pred-json-dict(dict).
@@ -97,8 +106,8 @@ def get_metrics(predictions, groundtruths, save_path, img_shape=(1024,2048), nc=
     """
     os.makedirs(save_path, exist_ok=True)
 
-    pd_ndim = (6+8) if with_attr else 6
-    gt_ndim = (5+8) if with_attr else 5
+    pd_ndim = (6+attr_num) if with_attr else 6
+    gt_ndim = (5+attr_num) if with_attr else 5
 
     if isinstance(groundtruths, str):
         gt_files = os.listdir(groundtruths)
@@ -114,7 +123,7 @@ def get_metrics(predictions, groundtruths, save_path, img_shape=(1024,2048), nc=
     seen = 0
 
     if with_attr:
-        attribute_eval = AttributeEval(8)
+        attribute_eval = AttributeEval(attr_num)
 
     for gt_filename in tqdm(gt_files):
         if isinstance(groundtruths, str):

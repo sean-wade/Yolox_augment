@@ -5,7 +5,6 @@
 import cv2
 import numpy as np
 
-
 __all__ = ["vis", "vis_tensor_targets", "vis_attr"]
 
 
@@ -45,7 +44,8 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
 _COLORS = np.array(
     [
-        0.000, 0.447, 0.741,
+        0.1, 0.2, 1,
+        # 0.000, 0.447, 0.741,
         0.850, 0.325, 0.098,
         0.929, 0.694, 0.125,
         0.494, 0.184, 0.556,
@@ -141,26 +141,26 @@ def vis_tensor_targets(input, targets, save_path):
             img1 = cv2.rectangle(img1, lt, rb, (0,255,0),1)
 
             if len(ttt) > 5:
-                attr_str = "".join(ttt[[0,5,6,7,8,9,10,11,12]].int().cpu().numpy().astype(np.str))
+                attr_str = "".join(ttt[5:].int().cpu().numpy().astype(np.str))
                 cv2.putText(img1, attr_str, lt, cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0,255,255), 1)
 
             cv2.imwrite(save_path, img1)
 
 
-colors = [tuple(map(int, np.random.randint(200, high=255, size=(3,)))) for _ in range(100)]
-
-def vis_attr(img, output, bboxes):
-    from yolox.data.datasets import DTLD_ATTRIBUTES
-    attr_names_list = list(DTLD_ATTRIBUTES.values())
-
+# colors = [tuple(map(int, np.random.randint(0, high=150, size=(3,)))) for _ in range(100)]
+def vis_attr(img, output, bboxes, attr_dict):
+    attr_names_list = list(attr_dict.values())
+    attr_nums = len(attr_dict)
     for idx, (out, bbox) in enumerate(zip(output, bboxes)):
         x0 = int(bbox[0])
         y0 = int(bbox[1])
         x1 = int(bbox[2])
         y1 = int(bbox[3])
 
-        cv2.rectangle(img, (x0, y1+1), ((x0+80, y1+110)), colors[idx], 2)
+        color = (_COLORS[idx] * 255 * 1.5).astype(np.uint8).tolist()
+        # color = colors[idx]
+        cv2.rectangle(img, (x0, y1+1), (x0+80, y1+110), color, 2)
 
-        for attr_idx, attr_class_id in enumerate(out[-8:].int().cpu().numpy()):
+        for attr_idx, attr_class_id in enumerate(out[-attr_nums:].int().cpu().numpy()):
             attr_str = attr_names_list[attr_idx][attr_class_id]
-            cv2.putText(img, attr_str, (x0, y1+13*attr_idx+15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors[idx], 1)
+            cv2.putText(img, attr_str, (x0, y1+13*attr_idx+15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)

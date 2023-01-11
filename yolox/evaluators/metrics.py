@@ -163,8 +163,8 @@ class AttributeEval:
 
         self.tps += matches.shape[0]
         for gt_idx, dt_idx in matches[:, :2]:
-            gt_attr = labels[int(gt_idx), -8:]
-            dt_attr = detections[int(dt_idx), -8:]
+            gt_attr = labels[int(gt_idx), -self.attr_num:]
+            dt_attr = detections[int(dt_idx), -self.attr_num:]
             error = (gt_attr != dt_attr).cpu()
             self.errors += error
 
@@ -175,7 +175,9 @@ class AttributeEval:
     def get_results(self):
         total_acc = 1 - self.errors.numpy().sum() / self.tps / self.attr_num
 
-        header = [f"tp={self.tps}", 'orientation', 'occlusion', 'relevance', 'reflection', 'direction', 'state', 'aspects', 'pictogram', "All"] 
+        # header = [f"tp={self.tps}", 'direction', 'orientation', 'state', 'indication', 'occlusion', 'truncation', 'blur', 'child_num', 'relevance', "All"] 
+        # header = [f"tp={self.tps}", 'orientation', 'occlusion', 'relevance', 'reflection', 'direction', 'state', 'aspects', 'pictogram', "All"] 
+        header = [f"tp={self.tps}", *["attr_%d"%aa for aa in range(self.attr_num)], "All"]
         infos = [("error_nums", *self.errors.numpy(), self.errors.numpy().sum()), ("accuracy", *self.get_accurate(), total_acc)]
         acc_str = get_table(header, infos)
         return acc_str

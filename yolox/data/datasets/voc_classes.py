@@ -4,7 +4,7 @@
 
 # VOC_CLASSES = ( '__background__', # always index 0
 
-VOC_CLASSES = ("traffic_light",)
+VOC_CLASSES = ("human", "guider", "sign1")
 
 # VOC_CLASSES = (
 #     "aeroplane",

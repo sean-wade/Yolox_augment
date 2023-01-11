@@ -62,9 +62,11 @@ class Trainer:
         # metric record
         self.meter = MeterBuffer(window_size=exp.print_interval)
         self.file_name = os.path.join(exp.output_dir, args.experiment_name)
+        self.train_vis_path = os.path.join(self.file_name, "train_vis")
 
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)
+            os.makedirs(self.train_vis_path, exist_ok=True)
 
         setup_logger(
             self.file_name,
@@ -106,7 +108,7 @@ class Trainer:
 
         if self.epoch % 5 ==0 and self.iter < 5:
             # save img-data for debug like yolov5, add by zhanghao
-            vis_tensor_targets(inps, targets, self.file_name+"/train_epoch_%d_%d.jpg"%(self.epoch, self.iter))
+            vis_tensor_targets(inps, targets, self.train_vis_path+"/train_epoch_%d_%d.jpg"%(self.epoch, self.iter))
 
         with torch.cuda.amp.autocast(enabled=self.amp_training):
             outputs = self.model(inps, targets)
@@ -273,7 +275,7 @@ class Trainer:
                 if self.args.logger == "tensorboard":
                     for k, v in loss_meter.items():
                         value = float(v.latest.cpu()) if isinstance(v.latest, torch.Tensor) else float(v.latest)
-                        self.tblogger.add_scalar(k, value, self.progress_in_iter)
+                        self.tblogger.add_scalar("loss/"+k, value, self.progress_in_iter)
                     self.tblogger.add_scalar("lr", self.optimizer.param_groups[0]["lr"], self.progress_in_iter)
                     self.tblogger.flush()
 

@@ -3,16 +3,26 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 """
+第一种方法, 传入图片目录
 CUDA_VISIBLE_DEVICES=7 python tools/demo.py image \
---path /data/DTLD_Yolo/images/val \
--f exps/yolox_VOCdtld_s.py \
--c YOLOX_outputs/yolox_VOCdtld_s/epoch_1_ckpt.pth \
---save_result --device gpu
+    --path /data/DTLD_Yolo/images/val \
+    -f exps/yolox_VOCdtld_s.py \
+    -c YOLOX_outputs/yolox_VOCdtld_s/epoch_1_ckpt.pth \
+    --save_result --device gpu
+
+第二种方法, 传入 json 文件
+python tools/demo.py image \
+    --path /mnt/data/SGTrain/tl_infos/total_val_infos.json \
+    -f exps/sgtls/sgtls_s_585_140.py \
+    -c YOLOX_outputs/sgtls_s_585_140/best_ckpt.pth \
+    --save_result --device cpu
+
 """
 
-import argparse
 import os
 import time
+import json
+import argparse
 from loguru import logger
 
 import cv2
@@ -20,7 +30,7 @@ import cv2
 import torch
 
 from yolox.data.data_augment import ValTransform
-from yolox.data.datasets import COCO_CLASSES, DTLD_CLASSES
+from yolox.data.datasets import COCO_CLASSES, DTLD_CLASSES, DTLD_ATTRIBUTES, SGTLS_ATTRIBUTES, SGTLS_CLASSES
 from yolox.exp import get_exp
 from yolox.utils import fuse_model, get_model_info, postprocess, vis, vis_attr
 
@@ -30,13 +40,14 @@ IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX Demo!")
     parser.add_argument(
-        "--demo", default="image", help="demo type, eg. image, video and webcam"
+        "demo", default="image", help="demo type, eg. image, video and webcam"
     )
-    parser.add_argument("-expn", "--experiment-name", type=str, default="ttt",)
+    parser.add_argument("-expn", "--experiment-name", type=str,)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
     parser.add_argument(
-        "--path", default="/home/zhanghao/code/master/2_DET2D/YOLOX/datasets/dtld_mini", help="path to images or video"
+        # "--path", default="/home/zhanghao/code/master/2_DET2D/YOLOX/datasets/dtld_mini", help="path to images or video"
+        "--path", default="/mnt/data/SGTrain/000_20220801/f30_undist", help="path to images or video"
     )
     parser.add_argument("--camid", type=int, default=0, help="webcam demo camera id")
     parser.add_argument(
@@ -117,6 +128,7 @@ class Predictor(object):
         device="cpu",
         fp16=False,
         legacy=False,
+        attr_dict = None,
     ):
         self.model = model
         self.cls_names = cls_names
@@ -137,6 +149,11 @@ class Predictor(object):
             x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
             self.model(x)
             self.model = model_trt
+        
+        self.atrr_dict = attr_dict
+        if attr_dict is not None:
+            self.attr_nums = [len(attr_values) for attr_values in attr_dict.values()]
+
 
     def inference(self, img):
         img_info = {"id": 0}
@@ -169,7 +186,7 @@ class Predictor(object):
                 outputs = self.decoder(outputs, dtype=outputs.type())
             outputs = postprocess(
                 outputs, self.num_classes, self.confthre,
-                self.nmsthre, class_agnostic=True
+                self.nmsthre, class_agnostic=True, attr_nums=self.attr_nums
             )
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
@@ -192,7 +209,7 @@ class Predictor(object):
         vis_res = vis(img, bboxes, scores, cls, cls_conf, self.cls_names)
 
         if output.shape[1] > 7:
-            vis_attr(img, output, bboxes)
+            vis_attr(img, output, bboxes, self.atrr_dict)
 
         return vis_res
 
@@ -200,8 +217,11 @@ class Predictor(object):
 def image_demo(predictor, vis_folder, path, current_time, save_result):
     if os.path.isdir(path):
         files = get_image_list(path)
+    elif path.endswith(".json"):
+        files = json.load(open(path))["images"]
     else:
         files = [path]
+
     files.sort()
     for image_name in files:
         outputs, img_info = predictor.inference(image_name)
@@ -214,9 +234,9 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
             save_file_name = os.path.join(save_folder, os.path.basename(image_name))
             logger.info("Saving detection result in {}".format(save_file_name))
             cv2.imwrite(save_file_name, result_image)
-        ch = cv2.waitKey(0)
-        if ch == 27 or ch == ord("q") or ch == ord("Q"):
-            break
+        #ch = cv2.waitKey(0)
+        #if ch == 27 or ch == ord("q") or ch == ord("Q"):
+        #    break
 
 
 def imageflow_demo(predictor, vis_folder, current_time, args):
@@ -307,7 +327,7 @@ def main(exp, args):
         trt_file = os.path.join(file_name, "model_trt.pth")
         assert os.path.exists(
             trt_file
-        ), "TensorRT model is not found!\n Run python3 tools/trt.py first!"
+        ), "TensorRT model [%s] is not found!\n Run python3 tools/trt.py first!"%trt_file
         model.head.decode_in_inference = False
         decoder = model.head.decode_outputs
         logger.info("Using TensorRT to inference")
@@ -316,8 +336,8 @@ def main(exp, args):
         decoder = None
 
     predictor = Predictor(
-        model, exp, DTLD_CLASSES, trt_file, decoder,
-        args.device, args.fp16, args.legacy,
+        model, exp, SGTLS_CLASSES, trt_file, decoder,
+        args.device, args.fp16, args.legacy, attr_dict=SGTLS_ATTRIBUTES
     )
     current_time = time.localtime()
     if args.demo == "image":

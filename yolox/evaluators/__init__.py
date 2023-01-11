@@ -5,6 +5,7 @@
 from .coco_evaluator import COCOEvaluator
 from .voc_evaluator import VOCEvaluator
 from .dtld_evaluator import DTLDEvaluator
+from .sgtls_evaluator import SGTLS_Evaluator
 
 from .metrics import *
 from .dtld_eval import get_metrics

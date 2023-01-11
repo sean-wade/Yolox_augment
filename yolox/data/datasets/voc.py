@@ -119,8 +119,8 @@ class VOCDetection(Dataset):
         self.target_transform = target_transform
         self.name = dataset_name
         self._annopath = os.path.join("%s", "Annotations", "%s.xml")
-        self._imgpath = os.path.join("%s", "JPEGImages", "%s.png")
-        # self._imgpath = os.path.join("%s", "JPEGImages", "%s.jpg")
+        # self._imgpath = os.path.join("%s", "JPEGImages", "%s.png")
+        self._imgpath = os.path.join("%s", "JPEGImages", "%s.jpg")
         self._classes = VOC_CLASSES
         self.ids = list()
         for (year, name) in image_sets:
@@ -152,7 +152,8 @@ class VOCDetection(Dataset):
         )
         max_h = self.img_size[0]
         max_w = self.img_size[1]
-        cache_file = os.path.join(self.root, f"img_resized_cache_{self.name}.array")
+        # cache_file = os.path.join(self.root, f"img_resized_cache_{self.name}.array")
+        cache_file = os.path.join(self.root, f"img_resized_cache_{self.name}_{max_h}_{max_w}.array")
         if not os.path.exists(cache_file):
             logger.info(
                 "Caching images for the first time. This might take about 3 minutes for VOC"
@@ -256,6 +257,31 @@ class VOCDetection(Dataset):
 
         return img, target, img_info, img_id
 
+    def evaluate_detections_v5(self, pred_boxes, save_path, with_attr=False):
+        from yolox.evaluators import get_metrics
+
+        gt_boxes = {}
+        for idx, anno_info in enumerate(self.annotations):
+            target, img_info, resized_info = anno_info
+            r = min(self.img_size[0] / img_info[0], self.img_size[1] / img_info[1])
+            gt_boxes_idx = target[:,:4] / r
+            labels_idx = target[:,4].reshape(-1,1)
+            if with_attr:
+                gt_attr = target[:,-len(SGTLS_ATTRIBUTES):]
+                gt_boxes[idx] = np.hstack((labels_idx, gt_boxes_idx, gt_attr))
+            else:
+                gt_boxes[idx] = np.hstack((labels_idx, gt_boxes_idx))
+        
+        return get_metrics(pred_boxes, 
+                           gt_boxes, 
+                           save_path, 
+                           img_shape=self.img_size, 
+                           nc=len(VOC_CLASSES), 
+                           with_attr=with_attr, 
+                           attr_num=-1, 
+                           class_names_dict={VOC_CLASSES.index(a) : a for a in VOC_CLASSES}
+                          )
+    
     def evaluate_detections(self, all_boxes, output_dir=None):
         """
         all_boxes is a list of length number-of-classes.

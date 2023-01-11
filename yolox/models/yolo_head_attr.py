@@ -41,6 +41,9 @@ class YOLOXHeadAttr(nn.Module):
         self.attribute_dict = attribute_dict
         self.attribute_classes = sum([len(x) for x in self.attribute_dict.values()])
         self.attr_weight = attr_weight
+        if self.attribute_dict:
+            logger.info("Training head with attributes : \n%s"%(self.attribute_dict))
+            logger.info("Attributes loss weight: %s"%(self.attr_weight))
 
         self.cls_convs = nn.ModuleList()
         self.reg_convs = nn.ModuleList()
