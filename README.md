@@ -11,7 +11,8 @@
 ### Attributes
 
 Add attribute detection branch and evaluate code(using DTLD dataset). The visualization results is as below:
-<img src="assets/demo2.png" width="1000" >
+<img src="assets/attr_dtld.png" width="1000" >
+<img src="assets/attr_sgtls.jpeg" width="1000" >
 
 ```
 For DTLD dataset, there are 8 types of attributes. The definition is as below:
